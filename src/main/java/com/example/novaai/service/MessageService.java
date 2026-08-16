@@ -9,6 +9,7 @@ import com.example.novaai.entity.ModelUsage;
 import com.example.novaai.entity.User;
 import com.example.novaai.exception.AIServiceException;
 import com.example.novaai.exception.ResourceNotFoundException;
+import com.example.novaai.exception.AppException;
 import com.example.novaai.integration.AiResponse;
 import com.example.novaai.integration.AIService;
 import com.example.novaai.integration.ChatMessage;
@@ -40,10 +41,12 @@ public class MessageService {
     private final AppConfig appConfig;
     private final ConversationMapper mapper;
     private final RateLimitService rateLimitService;
+    private final ModelService modelService;
 
     @Transactional
     public MessageResponse sendMessage(UUID userId, UUID conversationId, SendMessageRequest request) {
         rateLimitService.checkRateLimit(userId);
+        validateModel(request.model());
 
         Conversation conversation = conversationService.getOwnedEntity(userId, conversationId);
         User user = conversation.getUser();
@@ -161,6 +164,12 @@ public class MessageService {
 
         log.info("Streaming message persisted: conversationId={}, model={}",
             conversation.getId(), model);
+    }
+
+    private void validateModel(String model) {
+        if (!modelService.isSupported(model)) {
+            throw new AppException("UNSUPPORTED_MODEL", "The selected AI model is not available");
+        }
     }
 
     private List<ChatMessage> buildContext(Conversation conversation) {

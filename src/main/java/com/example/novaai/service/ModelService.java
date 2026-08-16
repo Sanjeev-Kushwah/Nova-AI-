@@ -26,4 +26,8 @@ public class ModelService {
     public String getDefaultModel() {
         return aiService.getDefaultModel();
     }
+
+    public boolean isSupported(String model) {
+        return getAvailableModels().stream().anyMatch(available -> available.id().equals(model));
+    }
 }
