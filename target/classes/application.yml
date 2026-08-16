@@ -1,0 +1,89 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: novaai-backend
+
+  datasource:
+    url: ${DATABASE_URL:jdbc:postgresql://localhost:5432/novaai}
+    username: ${DATABASE_USERNAME:novaai}
+    password: ${DATABASE_PASSWORD:novaai}
+    hikari:
+      maximum-pool-size: 20
+      minimum-idle: 5
+
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    open-in-view: false
+    properties:
+      hibernate:
+        jdbc:
+          time_zone: UTC
+
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+
+  jackson:
+    default-property-inclusion: non_null
+    serialization:
+      write-dates-as-timestamps: false
+
+# Actuator
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      show-details: when_authorized
+
+# Application configuration
+app:
+  jwt:
+    secret: ${JWT_SECRET:dGhpcy1pcy1hLXZlcnktbG9uZy1zZWNyZXQta2V5LWZvci1kZXZlbG9wbWVudC1vbmx5LWRvLW5vdC11c2UtaW4tcHJvZHVjdGlvbi1wbGVhc2U=}
+    expiration-ms: ${JWT_EXPIRATION_MS:86400000}
+    refresh-expiration-ms: ${JWT_REFRESH_EXPIRATION_MS:604800000}
+
+  cors:
+    allowed-origins: ${FRONTEND_URL:http://localhost:3000}
+    allowed-methods: GET,POST,PUT,PATCH,DELETE,OPTIONS
+    allowed-headers: "*"
+    allow-credentials: true
+
+  ai:
+    provider: ${AI_PROVIDER:openai}
+    system-prompt: ${AI_SYSTEM_PROMPT:"You are NovaAI, a helpful and professional AI assistant. Provide accurate, concise, and well-structured answers. When sharing code, use proper markdown code blocks with language tags."}
+    max-history-messages: ${AI_MAX_HISTORY:20}
+    timeout-ms: ${AI_TIMEOUT_MS:120000}
+
+    openai:
+      api-key: ${OPENAI_API_KEY:}
+      base-url: ${OPENAI_BASE_URL:https://api.openai.com/v1}
+      default-model: ${OPENAI_MODEL:gpt-4o-mini}
+
+  rate-limit:
+    authenticated-rpm: ${RATE_LIMIT_AUTH_RPM:30}
+    capacity: ${RATE_LIMIT_CAPACITY:30}
+
+  message:
+    max-length: ${MESSAGE_MAX_LENGTH:8000}
+
+# Logging
+logging:
+  level:
+    com.example.novaai: INFO
+    org.springframework.security: INFO
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - [%X{requestId}] %msg%n"
+
+# Springdoc / Swagger
+springdoc:
+  api-docs:
+    path: /api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+    operations-sorter: method
