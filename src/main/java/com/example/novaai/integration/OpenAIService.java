@@ -99,13 +99,19 @@ public class OpenAIService implements AIService {
 
     private String extractStreamContent(String line) {
         try {
-            if (line.startsWith("data: ")) {
-                line = line.substring(6);
+            line = line.trim();
+            if (line.startsWith("data:")) {
+                line = line.substring(5).trim();
             }
-            if (line.equals("[DONE]")) return null;
+            if (line.equals("[DONE]") || line.isBlank()) return null;
 
             JsonNode node = objectMapper.readTree(line);
-            return node.path("choices").path(0).path("delta").path("content").asText(null);
+            if (node.has("error")) {
+                String message = node.path("error").path("message").asText("AI provider returned an error");
+                throw new AIServiceException(message);
+            }
+            JsonNode delta = node.path("choices").path(0).path("delta");
+            return delta.path("content").isTextual() ? delta.path("content").asText() : null;
         } catch (Exception e) {
             log.debug("Failed to parse SSE chunk: {}", line);
             return null;
